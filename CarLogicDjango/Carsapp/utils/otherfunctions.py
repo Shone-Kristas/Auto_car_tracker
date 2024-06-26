@@ -26,7 +26,7 @@ def get_access_and_refresh(auth_code: str):
 
         return access_token, refresh_token
     except Exception as e:
-        return HttpResponse(f"Unexpected error: {e}", status=500)
+        return HttpResponse(f"Unexpected error: {e}")
 
 
 def get_VINs(access_token: str):
@@ -83,8 +83,52 @@ def get_data_car(access_token: str, vehicle_vin: str):
         vehicle_model = vehicle_data.get('response', {}).get('vehicle_config', {}).get('car_type')
         odometer_miles = vehicle_data.get('response', {}).get('vehicle_state', {}).get('odometer')
 
+        if vehicle_model is None or odometer_miles is None:
+            raise ValueError("Missing vehicle data in the response")
+
         odometer_km = odometer_miles * 1.60934
         return vehicle_manufacturer, vehicle_brand, vehicle_model, vehicle_vin, odometer_km
 
+    except requests.exceptions.HTTPError as http_err:
+        status_code = response.status_code if response else None
+        if status_code == 404:
+            raise ValueError(f"Vehicle with VIN '{vehicle_vin}' not found")
+        else:
+            raise ValueError(f"HTTP error occurred: {http_err}")
     except Exception as e:
-        return HttpResponse(f"Unexpected error: {e}", status=500)
+        raise ValueError(f"Unexpected error: {e}")
+
+
+def get_obtain_refresh_token(token):
+    headers = {
+        "Content-Type": "application/x-www-form-urlencoded"
+    }
+    data = {
+        "grant_type": "refresh_token",
+        "client_id": os.getenv('CLIENT_ID'),
+        "refresh_token": token
+    }
+    try:
+        response = requests.post(os.getenv('TESLA_TOKEN_URL'), headers=headers, data=data)
+        response.raise_for_status()
+
+        content_type = response.headers.get('Content-Type', '')
+        if 'application/json' in content_type:
+            response_json = response.json()
+            new_access_token = response_json.get("access_token")
+            new_refresh_token = response_json.get("refresh_token")
+
+            if not new_access_token or not new_refresh_token:
+                print("Missing access_token or refresh_token in response.")
+                return None, None
+            return new_access_token, new_refresh_token
+        else:
+            print(f"Response did not contain JSON data. Content-Type: {content_type}")
+            return None, None
+
+    except requests.exceptions.HTTPError as http_err:
+        print(f"HTTP error occurred: {http_err}")
+        return None, None
+    except Exception as err:
+        print(f"Other error occurred: {err}")
+        return None, None
