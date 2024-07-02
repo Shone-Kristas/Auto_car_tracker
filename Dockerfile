@@ -9,9 +9,14 @@ COPY requirements.txt .
 
 RUN pip install -r requirements.txt
 
+EXPOSE 8000
+
 COPY . .
 
 WORKDIR /app/CarLogicDjango
 
-CMD python manage.py migrate \
-    && python manage.py runserver 0.0.0.0:8000
+RUN python manage.py collectstatic --noinput
+
+CMD python manage.py migrate && \
+    gunicorn CarLogicDjango.wsgi:application --bind 0.0.0.0:8000
+

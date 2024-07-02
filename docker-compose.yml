@@ -15,16 +15,24 @@ services:
       - ./CarLog.db:/app/CarLog.db
     restart: always
 
+  redis:
+    image: redis:latest
+    container_name: redis
+    ports:
+      - "6379:6379"
+    restart: always
 
   django:
     build:
       context: .
     volumes:
       - .:/app
+      - ./CarLogicDjango/static:/app/CarLogicDjango/static
     ports:
       - "8000:8000"
     depends_on:
       - postgres
+      - redis
     environment:
       DEBUG: "True"
       DB_NAME: ${DB_NAME}
@@ -32,4 +40,61 @@ services:
       DB_PASSWORD: ${DB_PASSWORD}
       DB_HOST: ${DB_HOST}
       DB_PORT: ${DB_PORT}
+      CELERY_BROKER_URL: redis://redis:6379/0
+      CELERY_RESULT_BACKEND: redis://redis:6379/0
     restart: always
+
+  celery:
+    build:
+      context: .
+    command: celery -A CarLogicDjango worker --loglevel=info
+    volumes:
+      - .:/app
+    depends_on:
+      - postgres
+      - redis
+    environment:
+      DEBUG: "True"
+      DB_NAME: ${DB_NAME}
+      DB_USER: ${DB_USER}
+      DB_PASSWORD: ${DB_PASSWORD}
+      DB_HOST: ${DB_HOST}
+      DB_PORT: ${DB_PORT}
+      CELERY_BROKER_URL: redis://redis:6379/0
+      CELERY_RESULT_BACKEND: redis://redis:6379/0
+    restart: always
+
+  celery-beat:
+    build:
+      context: .
+    command: celery -A CarLogicDjango beat --loglevel=info
+    volumes:
+      - .:/app
+    depends_on:
+      - postgres
+      - redis
+    environment:
+      DEBUG: "True"
+      DB_NAME: ${DB_NAME}
+      DB_USER: ${DB_USER}
+      DB_PASSWORD: ${DB_PASSWORD}
+      DB_HOST: ${DB_HOST}
+      DB_PORT: ${DB_PORT}
+      CELERY_BROKER_URL: redis://redis:6379/0
+      CELERY_RESULT_BACKEND: redis://redis:6379/0
+    restart: always
+
+  nginx:
+    image: nginx:latest
+    container_name: nginx
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/conf
+      - ./CarLogicDjango/static:/app/CarLogicDjango/static  # Для доступа к статическим и медиа-файлам
+    ports:
+      - "80:80"
+    depends_on:
+      - django
+    restart: always
+
+volumes:
+  postgres_data:

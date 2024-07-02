@@ -2,3 +2,7 @@ django
 python-dotenv
 requests
 psycopg2-binary
+celery
+redis
+gunicorn
+django-celery-beat
