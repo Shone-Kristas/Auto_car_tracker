@@ -45,14 +45,10 @@ django-celery-beat==2.6.0
     # via -r requirements.in
 django-timezone-field==6.1.0
     # via django-celery-beat
-gunicorn==22.0.0
-    # via -r requirements.in
 idna==3.7
     # via requests
 kombu==5.3.7
     # via celery
-packaging==24.1
-    # via gunicorn
 prompt-toolkit==3.0.47
     # via click-repl
 psycopg2-binary==2.9.9

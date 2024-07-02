@@ -3,7 +3,6 @@ from django.urls import path, include
 from django.http import HttpResponse
 import os
 
-
 def serve_public_key(request):
     file_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', '.well-known', 'appspecific', 'com.tesla.3p.public-key.pem')
     with open(file_path, 'r') as f:
