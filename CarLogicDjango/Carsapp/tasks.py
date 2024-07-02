@@ -1,6 +1,6 @@
 from .utils.otherfunctions import get_data_car, get_obtain_refresh_token
 from .models import Car
-from django.http import HttpResponse, Http404
+from django.http import Http404
 from celery import shared_task
 
 

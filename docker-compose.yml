@@ -27,7 +27,6 @@ services:
       context: .
     volumes:
       - .:/app
-      - ./CarLogicDjango/static:/app/CarLogicDjango/static
     ports:
       - "8000:8000"
     depends_on:
@@ -82,18 +81,6 @@ services:
       DB_PORT: ${DB_PORT}
       CELERY_BROKER_URL: redis://redis:6379/0
       CELERY_RESULT_BACKEND: redis://redis:6379/0
-    restart: always
-
-  nginx:
-    image: nginx:latest
-    container_name: nginx
-    volumes:
-      - ./nginx/nginx.conf:/etc/nginx/conf
-      - ./CarLogicDjango/static:/app/CarLogicDjango/static  # Для доступа к статическим и медиа-файлам
-    ports:
-      - "80:80"
-    depends_on:
-      - django
     restart: always
 
 volumes:
